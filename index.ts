@@ -1,10 +1,12 @@
-import TelegramBot from 'node-telegram-bot-api';
+import TelegramBot, { ChatId } from 'node-telegram-bot-api';
 // import cron from 'node-cron';
 import { ComingHomeIntegrationService } from './src/integration/coming-home-integration-service.js';
 import { DataSourceService } from './src/data-source/data-source-service.js';
+import { ComingHomeTgBot } from './src/tg-bot/coming-home-tg-bot.js';
 
 // Инициализация Telegram бота
 // const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
+const bot = new ComingHomeTgBot(checkForUpdates);
 
 const comingHomeService = new ComingHomeIntegrationService();
 const dataSourceService = new DataSourceService(); 
@@ -14,62 +16,31 @@ function compareData(oldData: IApartmentItem[], response: IApartmentsListRespons
   const newData = response.data;
   const changes: string[] = [];
 
-  // Поиск новых элементов
   newData.forEach((newItem) => {
     if (!oldData.some((oldItem) => oldItem.cid === newItem.cid)) {
-      changes.push(`Новый объект: ${ comingHomeService.getApartmentUrl(newItem) }`);
+      changes.push(`New apartment: ${ comingHomeService.getApartmentUrl(newItem) }`);
     }
   });
-
-  // Поиск удаленных элементов
-  oldData.forEach((oldItem) => {
-    if (!newData.some((newItem) => newItem.cid === oldItem.cid)) {
-      changes.push(`Удален объект: ${ comingHomeService.getApartmentUrl(oldItem) }`);
-    }
-  });
-
-  // Поиск изменений в доступности
-  // newData.forEach((newItem) => {
-  //   const oldItem = oldData.find((item) => item.cid === newItem.cid);
-  //   if (oldItem && oldItem.available !== newItem.available) {
-  //     const status = newItem.available ? 'доступен' : 'недоступен';
-  //     changes.push(`Изменение статуса: ${newItem.title} теперь ${status}`);
-  //   }
-  // });
 
   return changes;
 }
 
-// Функция для отправки изменений через Telegram
-function notifyChanges(changes: string[]): void {
-  if (changes.length === 0) {
-    console.log('Нет изменений');
-    return;
-  }
-
-  changes.forEach(changeStr => console.log(changeStr));
-  
-  // const message = changes.join('\n');
-  // bot.sendMessage(TELEGRAM_CHAT_ID, message).then(() => {
-  //   console.log('Изменения отправлены через Telegram');
-  // }).catch(console.error);
-}
-
 // Основная функция
-async function checkForUpdates() {
+async function checkForUpdates(chatId?: ChatId) {
   const savedData = dataSourceService.loadData() as unknown as IApartmentsListResponse;
-  const currentData = await comingHomeService.fetchData();
+  const receivedData = await comingHomeService.fetchData();
 
-  if (!currentData || currentData.data.length === 0) {
-    console.log('Нет данных для обработки');
+  if (!receivedData || receivedData.data.length === 0) {
+    console.log('No data received!');
+    await bot.notifyChanges([], chatId);
     return;
   }
 
-  const changes = compareData(savedData.data, currentData);
+  const changes = compareData(savedData.data, receivedData);
+  await bot.notifyChanges(changes, chatId);
 
   if (changes.length > 0) {
-    notifyChanges(changes);
-    dataSourceService.updateSavedData(currentData);
+    dataSourceService.updateSavedData(receivedData);
   } else {
     console.log('Изменений не найдено');
   }
@@ -82,4 +53,4 @@ async function checkForUpdates() {
 // });
 
 // Первый запуск
-checkForUpdates();
+// checkForUpdates();
