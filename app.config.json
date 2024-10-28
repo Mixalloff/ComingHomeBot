@@ -1,0 +1,7 @@
+{
+  "API_URL": "https://api.coming-home.com/api/v1/properties?city=berlin,potsdam&taxonomies=1&lang=en&camelize=1",
+  "TELEGRAM_TOKEN": "7704132839:AAFAtoyKAw8r_9HStYN9mURW2J2azxqQcA4",
+  "TELEGRAM_CHAT_ID": "ComingHomeNotifierBot",
+  "COMING_HOME_API_URL": "https://api.coming-home.com/api/v1/properties?city=berlin,potsdam&taxonomies=1&lang=en&camelize=1",
+  "AUTHORIZATION_COMING_HOME_STRING": "coming:ch0817"
+}
