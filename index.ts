@@ -17,7 +17,7 @@ function compareData(oldData: IApartmentItem[], response: IApartmentsListRespons
   const changes: string[] = [];
 
   newData.forEach((newItem) => {
-    if (!oldData.some((oldItem) => oldItem.cid === newItem.cid)) {
+    if (!oldData?.some((oldItem) => oldItem.cid === newItem.cid)) {
       changes.push(`New apartment: ${ comingHomeService.getApartmentUrl(newItem) }`);
     }
   });
@@ -36,7 +36,7 @@ async function checkForUpdates(chatId?: ChatId) {
     return;
   }
 
-  const changes = compareData(savedData.data, receivedData);
+  const changes = compareData(savedData?.data, receivedData);
   await bot.notifyChanges(changes, chatId);
 
   if (changes.length > 0) {
