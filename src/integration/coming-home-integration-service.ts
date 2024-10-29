@@ -25,8 +25,4 @@ export class ComingHomeIntegrationService {
       return null;
     }
   }
-
-  getApartmentUrl(apartment: IApartmentItem) {
-    return `https://www.coming-home.com/en/living/${apartment.cid}`;
-  }
 }

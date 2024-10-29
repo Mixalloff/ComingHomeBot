@@ -1,5 +1,6 @@
 import TelegramBot, { ChatId } from 'node-telegram-bot-api';
 import * as config from '../../app.config.json' assert { type: 'json' };
+import { IApartmentChange } from '../typings/common.js';
 const { TELEGRAM_TOKEN } = config.default;
 
 export class ComingHomeTgBot {
@@ -36,21 +37,34 @@ export class ComingHomeTgBot {
   }
 
   // Функция для отправки изменений через Telegram
-  async notifyChanges(changes: string[], chatId?: ChatId): Promise<void> {
+  async notifyChanges(changes: IApartmentChange[], chatId?: ChatId): Promise<void> {
     const message = changes.length === 0
       ? 'Нет изменений'
-      : changes.join('\n');
+      : changes.map(change => this.getApartmentUrl(change.item)).join('\n');
     console.log(message);
     
     if (chatId) {
       if (changes?.length) {
         await Promise.all(
-          changes.map(changeMessage => this.bot.sendMessage(chatId, changeMessage))
+          changes.map(change => this.bot.sendMessage(chatId, this.constructChangeMessage(change)))
         ).catch(console.error);
       } else {
         this.bot.sendMessage(chatId, 'There are no new apartments available!');
       }
     }
+  }
 
+  private constructChangeMessage(change: IApartmentChange): string {
+    return `
+      ${this.getApartmentUrl(change.item)}
+      Price: ${ change.item.rent } euro
+      ${ change.item.squaremeter } sq.m / ${ change.item.rooms } rooms
+      From: ${ change.item.availableFrom }
+      ${ [change.item.postCode, change.item.street, change.item.district].filter(Boolean).join(', ') }
+    `;
+  }
+
+  private getApartmentUrl(apartment: IApartmentItem) {
+    return `https://www.coming-home.com/en/living/${apartment.cid}`;
   }
 }

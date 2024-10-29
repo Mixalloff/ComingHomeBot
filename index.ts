@@ -3,6 +3,7 @@ import TelegramBot, { ChatId } from 'node-telegram-bot-api';
 import { ComingHomeIntegrationService } from './src/integration/coming-home-integration-service.js';
 import { DataSourceService } from './src/data-source/data-source-service.js';
 import { ComingHomeTgBot } from './src/tg-bot/coming-home-tg-bot.js';
+import { ApartmentChangeTypeEnum, IApartmentChange } from './src/typings/common.js';
 
 // Инициализация Telegram бота
 // const bot = new TelegramBot(TELEGRAM_TOKEN, { polling: true });
@@ -12,13 +13,22 @@ const comingHomeService = new ComingHomeIntegrationService();
 const dataSourceService = new DataSourceService(); 
 
 // Функция для сравнения текущего и предыдущего списка
-function compareData(oldData: IApartmentItem[], response: IApartmentsListResponse): string[] {
+function compareData(oldData: IApartmentItem[], response: IApartmentsListResponse): IApartmentChange[] {
   const newData = response.data;
-  const changes: string[] = [];
+  const changes: IApartmentChange[] = [];
+
+  if (!oldData || !newData) {
+    return [];
+  }
 
   newData.forEach((newItem) => {
     if (!oldData?.some((oldItem) => oldItem.cid === newItem.cid)) {
-      changes.push(`New apartment: ${ comingHomeService.getApartmentUrl(newItem) }`);
+      const newApartmentChange = {
+        type: ApartmentChangeTypeEnum.ADDED_ITEM,
+        item: newItem,
+      };
+      changes.push(newApartmentChange);
+      // changes.push(`New apartment: ${ comingHomeService.getApartmentUrl(newItem) }`);
     }
   });
 
